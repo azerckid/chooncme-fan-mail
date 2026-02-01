@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { fanLetters, replies } from "@/db/schema";
-import { eq, sql, isNull } from "drizzle-orm";
+import { eq, sql, isNull, gte, desc } from "drizzle-orm";
+import { DateTime } from "luxon";
 import {
     Card,
     CardContent,
@@ -13,9 +14,10 @@ import {
     MailOpen,
     MessageSquareOff,
     TrendingUp,
-    Globe,
-    SmilePlus
 } from "lucide-react";
+import { TrendChart, SentimentChart, LanguageChart } from "@/components/dashboard/charts";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 
 async function getStats() {
     try {
@@ -32,19 +34,86 @@ async function getStats() {
             .leftJoin(replies, eq(fanLetters.id, replies.letterId))
             .where(isNull(replies.id));
 
+        // 언어별 분포
+        const byLanguage = await db.select({
+            language: fanLetters.language,
+            count: sql<number>`count(*)`
+        })
+            .from(fanLetters)
+            .groupBy(fanLetters.language);
+
+        // 감정별 분포
+        const bySentiment = await db.select({
+            sentiment: fanLetters.sentiment,
+            count: sql<number>`count(*)`
+        })
+            .from(fanLetters)
+            .groupBy(fanLetters.sentiment);
+
+        // 최근 7일 수신 추이
+        const sevenDaysAgo = DateTime.now().minus({ days: 7 }).toISODate();
+        const recentTrendData = await db.select({
+            date: sql<string>`date(received_at)`,
+            count: sql<number>`count(*)`
+        })
+            .from(fanLetters)
+            .where(gte(fanLetters.receivedAt, sevenDaysAgo || ""))
+            .groupBy(sql`date(received_at)`)
+            .orderBy(sql`date(received_at)`);
+
+        // 7일 날짜 배열 생성
+        const recentTrend = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = DateTime.now().minus({ days: i }).toISODate();
+            const found = recentTrendData.find(d => d.date === date);
+            recentTrend.push({
+                date,
+                count: found?.count || 0
+            });
+        }
+
+        const today = DateTime.now().toISODate();
+        const todayCount = recentTrendData.find(d => d.date === today)?.count || 0;
+
         return {
             total: counts[0]?.total || 0,
             unread: Number(counts[0]?.unread || 0),
             unreplied: unrepliedResult[0]?.count || 0,
+            todayCount,
+            byLanguage: Object.fromEntries(byLanguage.map(x => [x.language || "unknown", x.count])),
+            bySentiment: Object.fromEntries(bySentiment.map(x => [x.sentiment || "unknown", x.count])),
+            recentTrend,
         };
     } catch (error) {
         console.error("Stats fetch error:", error);
-        return { total: 0, unread: 0, unreplied: 0 };
+        return {
+            total: 0,
+            unread: 0,
+            unreplied: 0,
+            todayCount: 0,
+            byLanguage: {},
+            bySentiment: {},
+            recentTrend: [],
+        };
+    }
+}
+
+async function getRecentLetters() {
+    try {
+        const letters = await db.query.fanLetters.findMany({
+            orderBy: [desc(fanLetters.receivedAt)],
+            limit: 5,
+        });
+        return letters;
+    } catch (error) {
+        console.error("Recent letters fetch error:", error);
+        return [];
     }
 }
 
 export default async function DashboardPage() {
     const stats = await getStats();
+    const recentLetters = await getRecentLetters();
 
     const cards = [
         {
@@ -73,8 +142,8 @@ export default async function DashboardPage() {
         },
         {
             title: "오늘의 수신",
-            value: 0, // 임시
-            description: "최근 24시간 내 수신",
+            value: stats.todayCount,
+            description: "오늘 수신된 편지",
             icon: TrendingUp,
             color: "text-green-600",
             bg: "bg-green-50"
@@ -112,24 +181,85 @@ export default async function DashboardPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="col-span-4 border-none shadow-sm bg-white">
                     <CardHeader>
-                        <CardTitle>최근 수신 데이터 분석</CardTitle>
-                        <CardDescription>언어 및 감정별 분포 현황</CardDescription>
+                        <CardTitle>최근 7일 수신 추이</CardTitle>
+                        <CardDescription>일별 팬레터 수신 현황</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[300px] flex items-center justify-center text-neutral-400 italic">
-                        데이터가 축적되면 시각화 차트가 표시됩니다.
+                    <CardContent>
+                        <TrendChart data={stats.recentTrend} />
                     </CardContent>
                 </Card>
 
                 <Card className="col-span-3 border-none shadow-sm bg-white">
                     <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <Globe className="w-4 h-4 text-neutral-400" />
-                            <CardTitle>지역별 수신</CardTitle>
-                        </div>
-                        <CardDescription>글로벌 팬덤 분포</CardDescription>
+                        <CardTitle>감정 분석</CardTitle>
+                        <CardDescription>팬레터 감정 분포</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[300px] flex items-center justify-center text-neutral-400 italic">
-                        지역 추정 데이터 준비 중
+                    <CardContent>
+                        <SentimentChart data={stats.bySentiment} />
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+                <Card className="border-none shadow-sm bg-white">
+                    <CardHeader>
+                        <CardTitle>언어별 분포</CardTitle>
+                        <CardDescription>글로벌 팬덤 현황</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <LanguageChart data={stats.byLanguage} />
+                    </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-sm bg-white">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>최근 수신 편지</CardTitle>
+                            <CardDescription>최근 도착한 팬레터</CardDescription>
+                        </div>
+                        <Link
+                            href="/dashboard/letters"
+                            className="text-sm text-blue-600 hover:underline"
+                        >
+                            전체 보기
+                        </Link>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {recentLetters.length === 0 ? (
+                            <p className="text-neutral-400 text-sm text-center py-8">
+                                아직 수신된 편지가 없습니다
+                            </p>
+                        ) : (
+                            recentLetters.map((letter) => (
+                                <Link
+                                    key={letter.id}
+                                    href={`/dashboard/letters/${letter.id}`}
+                                    className="flex items-center justify-between p-3 rounded-xl hover:bg-neutral-50 transition-colors border border-neutral-100"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-neutral-900 rounded-xl flex items-center justify-center text-white font-bold text-sm">
+                                            {letter.senderName[0]}
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-sm">
+                                                {letter.senderName}
+                                                {!letter.isRead && (
+                                                    <Badge className="ml-2 bg-blue-500 text-[10px]">NEW</Badge>
+                                                )}
+                                            </p>
+                                            <p className="text-xs text-neutral-400 truncate max-w-[200px]">
+                                                {letter.subject || letter.content.slice(0, 30)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-xs text-neutral-400">
+                                        {letter.receivedAt
+                                            ? DateTime.fromISO(letter.receivedAt).toRelative({ locale: "ko" })
+                                            : "-"}
+                                    </div>
+                                </Link>
+                            ))
+                        )}
                     </CardContent>
                 </Card>
             </div>

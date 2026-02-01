@@ -47,19 +47,19 @@
 
 ---
 
-## Phase 1: 기반 구축 및 DB 설계 (Foundation & Database)
+## Phase 1: 기반 구축 및 DB 설계 (Foundation & Database) ✅ 완료
 
 ### 1.1 Next.js 프로젝트 초기화
-- [ ] `create-next-app`으로 프로젝트 생성
+- [x] `create-next-app`으로 프로젝트 생성
   - TypeScript 활성화
   - App Router 사용 (app 디렉토리 구조)
   - Tailwind CSS 포함
-- [ ] Shadcn/UI 설치 및 초기 설정
+- [x] Shadcn/UI 설치 및 초기 설정
   ```bash
   npx shadcn-ui@latest init
   ```
-- [ ] 기본 컴포넌트 설치 (Button, Card, Input, Textarea, Badge, Select 등)
-- [ ] 프로젝트 디렉토리 구조 정리
+- [x] 기본 컴포넌트 설치 (Button, Card, Input, Textarea, Badge, Select 등)
+- [x] 프로젝트 디렉토리 구조 정리
   ```
   src/
   ├── app/
@@ -77,21 +77,21 @@
   ```
 
 ### 1.2 Turso 데이터베이스 설정
-- [ ] Turso CLI 설치 및 로그인
+- [x] Turso CLI 설치 및 로그인
   ```bash
   brew install tursodatabase/tap/turso
   turso auth login
   ```
-- [ ] 데이터베이스 생성
+- [x] 데이터베이스 생성
   ```bash
   turso db create chooncme-fan-letter
   turso db show chooncme-fan-letter
   ```
-- [ ] 인증 토큰 생성 및 환경변수 설정
+- [x] 인증 토큰 생성 및 환경변수 설정
   ```bash
   turso db tokens create chooncme-fan-letter
   ```
-- [ ] `.env.local` 파일 구성
+- [x] `.env.local` 파일 구성
   ```env
   TURSO_DATABASE_URL=libsql://...
   TURSO_AUTH_TOKEN=...
@@ -99,16 +99,16 @@
   ```
 
 ### 1.3 Drizzle ORM 설정
-- [ ] 필수 패키지 설치
+- [x] 필수 패키지 설치
   ```bash
   npm install drizzle-orm @libsql/client
   npm install -D drizzle-kit
   ```
-- [ ] `drizzle.config.ts` 파일 생성
-- [ ] 데이터베이스 연결 클라이언트 설정 (`src/lib/db/index.ts`)
+- [x] `drizzle.config.ts` 파일 생성
+- [x] 데이터베이스 연결 클라이언트 설정 (`src/lib/db/index.ts`)
 
 ### 1.4 스키마 정의 및 마이그레이션
-- [ ] `FanLetters` 테이블 스키마 정의 (분석 데이터 포함)
+- [x] `FanLetters` 테이블 스키마 정의 (분석 데이터 포함)
   ```typescript
   // src/lib/db/schema.ts
   import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core';
@@ -150,7 +150,7 @@
     receivedAtIdx: index('idx_received_at').on(table.receivedAt),
   }));
   ```
-- [ ] `Replies` 테이블 스키마 정의
+- [x] `Replies` 테이블 스키마 정의
   ```typescript
   export const replies = sqliteTable('replies', {
     id: integer('id').primaryKey({ autoIncrement: true }),
@@ -164,32 +164,32 @@
     createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   });
   ```
-- [ ] 마이그레이션 생성 및 실행
+- [x] 마이그레이션 생성 및 실행
   ```bash
   npx drizzle-kit generate
   npx drizzle-kit push
   ```
-- [ ] Drizzle Studio로 테이블 확인
+- [x] Drizzle Studio로 테이블 확인
   ```bash
   npx drizzle-kit studio
   ```
 
 ---
 
-## Phase 2: API 개발 (API Development)
+## Phase 2: API 개발 (API Development) ✅ 완료
 
 > **핵심**: 춘심AI가 호출하는 API 엔드포인트 구현
 
 ### 2.1 API 인증 미들웨어
-- [ ] API Secret Key 검증 미들웨어 구현
+- [x] API Secret Key 검증 미들웨어 구현
   ```typescript
   // 춘심AI 요청 헤더: Authorization: Bearer <API_SECRET_KEY>
   ```
-- [ ] 인증 실패 시 401 응답
+- [x] 인증 실패 시 401 응답
 
 ### 2.2 팬레터 저장 API (`POST /api/letters`)
-- [ ] API Route 핸들러 생성 (`src/app/api/letters/route.ts`)
-- [ ] 춘심AI가 전송하는 데이터 구조 정의 (분석 데이터 포함)
+- [x] API Route 핸들러 생성 (`src/app/api/letters/route.ts`)
+- [x] 춘심AI가 전송하는 데이터 구조 정의 (분석 데이터 포함)
   ```typescript
   // 춘심AI → 이 시스템 요청 Body
   {
@@ -209,7 +209,7 @@
     topics?: string[];        // 주제 태그 배열
   }
   ```
-- [ ] Zod 스키마 정의
+- [x] Zod 스키마 정의
   ```typescript
   // src/lib/validations/letter.ts
   export const createLetterSchema = z.object({
@@ -231,16 +231,16 @@
     topics: z.array(z.string()).optional(),
   });
   ```
-- [ ] 중복 저장 방지 (emailId 기준)
-- [ ] topics 배열을 JSON 문자열로 변환하여 저장
-- [ ] 응답 포맷
+- [x] 중복 저장 방지 (emailId 기준)
+- [x] topics 배열을 JSON 문자열로 변환하여 저장
+- [x] 응답 포맷
   ```typescript
   // 성공: { success: true, data: { id: number } }
   // 실패: { success: false, error: { message: string, code: string } }
   ```
 
 ### 2.3 팬레터 조회 API (대시보드용)
-- [ ] `GET /api/letters` - 목록 조회 (필터링/검색 지원)
+- [x] `GET /api/letters` - 목록 조회 (필터링/검색 지원)
   - Query params:
     - `page`, `limit` - 페이지네이션
     - `search` - 발신자 이름/이메일 검색
@@ -251,37 +251,37 @@
     - `isStarred` - 즐겨찾기 필터
     - `startDate`, `endDate` - 기간 필터
   - 최신순 정렬 (receivedAt DESC)
-- [ ] `GET /api/letters/[id]` - 단일 조회
-- [ ] `PATCH /api/letters/[id]` - 상태 업데이트
+- [x] `GET /api/letters/[id]` - 단일 조회
+- [x] `PATCH /api/letters/[id]` - 상태 업데이트
   - 읽음 상태 (`isRead`)
   - 즐겨찾기 (`isStarred`)
 
 ### 2.4 통계 API
-- [ ] `GET /api/stats` - 대시보드 통계
+- [x] `GET /api/stats` - 대시보드 통계
   ```typescript
   // 응답 예시
   {
     total: number;           // 전체 팬레터 수
     unread: number;          // 안읽은 수
     unreplied: number;       // 미답장 수
+    todayCount: number;      // 오늘 수신 수
     byLanguage: { ko: number, en: number, ... };
-    byCountry: { KR: number, US: number, ... };
     bySentiment: { positive: number, neutral: number, negative: number };
     recentTrend: [...];      // 최근 7일 수신 추이
   }
   ```
 
 ### 2.5 답장 API
-- [ ] `POST /api/letters/[id]/reply` - 답장 저장
+- [x] `POST /api/letters/[id]/reply` - 답장 저장
   - 대시보드에서 작성한 답장을 DB에 저장
   - 춘심AI가 이 데이터를 조회하여 이메일 발송
-- [ ] `GET /api/letters/[id]/reply` - 답장 조회
-- [ ] `GET /api/replies/pending` - 미발송 답장 목록 (춘심AI용)
-- [ ] `PATCH /api/replies/[id]` - 이메일 발송 상태 업데이트
+- [x] `GET /api/letters/[id]/reply` - 답장 조회
+- [x] `GET /api/replies/pending` - 미발송 답장 목록 (춘심AI용)
+- [x] `PATCH /api/replies/[id]` - 이메일 발송 상태 업데이트
   - 춘심AI가 이메일 발송 후 호출
 
 ### 2.6 API 문서 및 테스트
-- [ ] API 명세서 작성 (`docs/api/API_SPEC.md`)
+- [x] API 명세서 작성 (`docs/api/API_SPEC.md`)
 - [ ] Postman/Bruno 컬렉션 생성
 - [ ] 테스트 케이스
   - 정상 저장 (분석 데이터 포함/미포함)
@@ -292,12 +292,12 @@
 
 ---
 
-## Phase 3: 대시보드 개발 (Dashboard Implementation)
+## Phase 3: 대시보드 개발 (Dashboard Implementation) ✅ 완료
 
 > **핵심**: 관리자가 팬레터를 조회/검색/분석하는 UI
 
 ### 3.1 레이아웃 및 공통 컴포넌트
-- [ ] 대시보드 레이아웃 구현 (`app/dashboard/layout.tsx`)
+- [x] 대시보드 레이아웃 구현 (`app/dashboard/layout.tsx`)
   - 헤더 (춘심이 로고/타이틀)
   - 사이드바 (네비게이션, 필터 영역)
 - [ ] 춘심이 테마 색상 정의
@@ -308,27 +308,27 @@
   ```
 
 ### 3.2 대시보드 홈 (`/dashboard`)
-- [ ] 통계 카드 표시
+- [x] 통계 카드 표시
   - 전체 팬레터 수
   - 안읽은 편지 수
   - 미답장 편지 수
   - 오늘 수신 수
-- [ ] 언어별/국가별/감정별 차트 (선택사항)
-- [ ] 최근 수신 편지 미리보기
+- [x] 언어별/감정별 차트 (recharts 사용)
+- [x] 최근 수신 편지 미리보기 (최근 5개)
 
 ### 3.3 팬레터 목록 페이지 (`/dashboard/letters`)
-- [ ] 서버 컴포넌트로 데이터 페칭
-- [ ] **검색 기능**
+- [x] 서버 컴포넌트로 데이터 페칭
+- [x] **검색 기능**
   - 발신자 이름/이메일 검색
   - 특정 팬의 모든 편지 조회
-- [ ] **필터링 기능**
+- [x] **필터링 기능**
   - 언어별 필터 (한국어, 영어, 일본어, 중국어 등)
   - 국가별 필터
   - 감정별 필터 (긍정, 중립, 부정)
   - 읽음/안읽음
   - 즐겨찾기
   - 기간 필터
-- [ ] 팬레터 카드 컴포넌트
+- [x] 팬레터 카드 컴포넌트
   - 발신자 이름 / 이메일
   - 제목
   - 내용 미리보기 (50자)
@@ -338,32 +338,32 @@
   - 읽음/안읽음 상태
   - 즐겨찾기 토글
   - 답장 여부 표시
-- [ ] 페이지네이션 UI
-- [ ] 빈 상태 UI (편지가 없을 때)
+- [x] 페이지네이션 UI
+- [x] 빈 상태 UI (편지가 없을 때)
 
 ### 3.4 팬레터 상세 페이지 (`/dashboard/letters/[id]`)
-- [ ] 이메일 메타데이터 표시
+- [x] 이메일 메타데이터 표시
   - 발신자, 제목, 수신 시간
   - **언어, 국가, 감정 분석 결과**
   - **주제 태그**
-- [ ] 팬레터 전체 내용 표시
-- [ ] 같은 발신자의 이전 편지 목록 (히스토리)
-- [ ] 답장 작성 폼
+- [x] 팬레터 전체 내용 표시
+- [x] 같은 발신자의 이전 편지 목록 (히스토리)
+- [x] 답장 작성 폼
   - Textarea
   - 저장 버튼 (DB 저장 → 춘심AI가 이메일 발송)
-- [ ] 기존 답장 표시 (있는 경우)
+- [x] 기존 답장 표시 (있는 경우)
   - 이메일 발송 상태 표시
-- [ ] 뒤로가기 네비게이션
+- [x] 뒤로가기 네비게이션
 
 ### 3.5 UI/UX 개선
-- [ ] 로딩 상태 (Skeleton UI)
-- [ ] 토스트 알림 (저장 성공/에러)
-- [ ] 반응형 디자인 (모바일 대응)
+- [x] 로딩 상태 (Skeleton UI)
+- [x] 토스트 알림 (저장 성공/에러)
+- [x] 반응형 디자인 (모바일 대응)
 - [ ] 키보드 단축키 (j/k 네비게이션, s 즐겨찾기 등 - 선택사항)
 
 ---
 
-## Phase 4: 배포 및 최종 점검 (Deployment & QA)
+## Phase 4: 배포 및 최종 점검 (Deployment & QA) ⏳ 미완료
 
 ### 4.1 Vercel 배포
 - [ ] Vercel 프로젝트 연결
@@ -402,22 +402,22 @@
 ## 의존성 관계 다이어그램
 
 ```
-Phase 1.1 (Next.js 초기화)
+Phase 1.1 (Next.js 초기화) ✅
     │
-    ├── Phase 1.2 (Turso 설정) ──┐
-    │                            │
-    └── Phase 1.3 (Drizzle 설정)─┴── Phase 1.4 (스키마/마이그레이션)
+    ├── Phase 1.2 (Turso 설정) ✅ ──┐
+    │                               │
+    └── Phase 1.3 (Drizzle 설정) ✅ ┴── Phase 1.4 (스키마/마이그레이션) ✅
                                             │
                                             ▼
-                                    Phase 2 (API 개발)
+                                    Phase 2 (API 개발) ✅
                                       │         │
                     ┌─────────────────┘         └─────────────────┐
                     ▼                                             ▼
-            춘심AI 연동 테스트                            Phase 3 (대시보드)
+            춘심AI 연동 테스트 ⏳                         Phase 3 (대시보드) ✅
                     │                                             │
                     └─────────────────┬───────────────────────────┘
                                       ▼
-                              Phase 4 (배포/QA)
+                              Phase 4 (배포/QA) ⏳
 ```
 
 ---
@@ -426,12 +426,13 @@ Phase 1.1 (Next.js 초기화)
 
 | 분류 | 기술 |
 |------|------|
-| Framework | Next.js 14+ (App Router) |
+| Framework | Next.js 16+ (App Router) |
 | Language | TypeScript |
 | Styling | Tailwind CSS + Shadcn/UI |
 | Database | Turso (libSQL) |
 | ORM | Drizzle ORM |
 | Validation | Zod |
+| Charts | Recharts |
 | Deployment | Vercel |
 | External | 춘심AI (이메일 수신/발송/분석) |
 
@@ -473,17 +474,28 @@ Phase 1.1 (Next.js 초기화)
 
 ## API 엔드포인트 요약
 
-| Method | Endpoint | 호출 주체 | 설명 |
-|--------|----------|-----------|------|
-| `POST` | `/api/letters` | 춘심AI | 팬레터 저장 (분석 데이터 포함) |
-| `GET` | `/api/letters` | 대시보드 | 목록 조회 (검색/필터 지원) |
-| `GET` | `/api/letters/[id]` | 대시보드 | 상세 조회 |
-| `PATCH` | `/api/letters/[id]` | 대시보드 | 상태 업데이트 (읽음/즐겨찾기) |
-| `GET` | `/api/stats` | 대시보드 | 통계 조회 |
-| `POST` | `/api/letters/[id]/reply` | 대시보드 | 답장 저장 |
-| `GET` | `/api/letters/[id]/reply` | 춘심AI | 답장 조회 |
-| `GET` | `/api/replies/pending` | 춘심AI | 미발송 답장 목록 |
-| `PATCH` | `/api/replies/[id]` | 춘심AI | 발송 상태 업데이트 |
+| Method | Endpoint | 호출 주체 | 설명 | 상태 |
+|--------|----------|-----------|------|------|
+| `POST` | `/api/letters` | 춘심AI | 팬레터 저장 (분석 데이터 포함) | ✅ |
+| `GET` | `/api/letters` | 대시보드 | 목록 조회 (검색/필터 지원) | ✅ |
+| `GET` | `/api/letters/[id]` | 대시보드 | 상세 조회 | ✅ |
+| `PATCH` | `/api/letters/[id]` | 대시보드 | 상태 업데이트 (읽음/즐겨찾기) | ✅ |
+| `GET` | `/api/stats` | 대시보드 | 통계 조회 | ✅ |
+| `POST` | `/api/letters/[id]/reply` | 대시보드 | 답장 저장 | ✅ |
+| `GET` | `/api/letters/[id]/reply` | 춘심AI | 답장 조회 | ✅ |
+| `GET` | `/api/replies/pending` | 춘심AI | 미발송 답장 목록 | ✅ |
+| `PATCH` | `/api/replies/[id]` | 춘심AI | 발송 상태 업데이트 | ✅ |
+
+---
+
+## 진행 상태 요약
+
+| Phase | 진행률 | 상태 |
+|-------|--------|------|
+| Phase 1: 기반 구축 | 100% | ✅ 완료 |
+| Phase 2: API 개발 | 100% | ✅ 완료 |
+| Phase 3: 대시보드 | 100% | ✅ 완료 |
+| Phase 4: 배포/QA | 0% | ⏳ 대기 |
 
 ---
 

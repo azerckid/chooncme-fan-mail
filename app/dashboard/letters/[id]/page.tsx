@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { fanLetters, replies } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, ne, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -8,11 +8,10 @@ import {
     CardContent,
     CardHeader,
     CardTitle,
-    CardDescription
 } from "@/components/ui/card";
 import { ReplyForm } from "@/components/dashboard/letters/reply-form";
 import Link from "next/link";
-import { ChevronLeft, Mail, User, Calendar, MapPin, Smile, Heart } from "lucide-react";
+import { ChevronLeft, Calendar, MapPin, Smile, Heart, History } from "lucide-react";
 import { DateTime } from "luxon";
 
 async function getLetterDetail(id: number) {
@@ -26,12 +25,22 @@ async function getLetterDetail(id: number) {
         where: eq(replies.letterId, id),
     });
 
+    // 같은 발신자의 다른 편지 조회 (최근 5개)
+    const senderHistory = await db.query.fanLetters.findMany({
+        where: and(
+            eq(fanLetters.senderEmail, item.senderEmail),
+            ne(fanLetters.id, id)
+        ),
+        orderBy: [desc(fanLetters.receivedAt)],
+        limit: 5,
+    });
+
     // 읽음 표시 업데이트 (비동기)
     if (!item.isRead) {
         await db.update(fanLetters).set({ isRead: true }).where(eq(fanLetters.id, id));
     }
 
-    return { ...item, reply };
+    return { ...item, reply, senderHistory };
 }
 
 export default async function LetterDetailPage({
@@ -151,6 +160,36 @@ export default async function LetterDetailPage({
                             {data.sentiment === 'negative' ? ' 조금 속상한 일이 있으신 것 같아요. 따뜻한 위로를 부탁드려요.' : ' 춘심이의 밝은 에너지를 담아 즐겁게 답장해 주세요!'}
                         </p>
                     </div>
+
+                    {/* Sender History */}
+                    {data.senderHistory && data.senderHistory.length > 0 && (
+                        <Card className="border-none shadow-sm bg-neutral-50/50">
+                            <CardHeader>
+                                <CardTitle className="text-md flex items-center gap-2">
+                                    <History className="w-4 h-4 text-neutral-500" />
+                                    이 팬의 이전 편지 ({data.senderHistory.length})
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                {data.senderHistory.map((letter) => (
+                                    <Link
+                                        key={letter.id}
+                                        href={`/dashboard/letters/${letter.id}`}
+                                        className="block p-3 rounded-xl bg-white hover:bg-neutral-100 transition-colors border border-neutral-100"
+                                    >
+                                        <p className="text-sm font-medium text-neutral-900 truncate">
+                                            {letter.subject || "(제목 없음)"}
+                                        </p>
+                                        <p className="text-xs text-neutral-400 mt-1">
+                                            {letter.receivedAt
+                                                ? DateTime.fromISO(letter.receivedAt).toFormat("yyyy.MM.dd")
+                                                : "-"}
+                                        </p>
+                                    </Link>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
         </div>

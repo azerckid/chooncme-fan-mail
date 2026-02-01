@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { fanLetters, replies } from "@/db/schema";
-import { eq, sql, isNull } from "drizzle-orm";
+import { eq, sql, isNull, gte, and } from "drizzle-orm";
+import { DateTime } from "luxon";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
     try {
         // 1. 전체 수 및 상태별 수 집계
         const counts = await db.select({
@@ -35,14 +36,44 @@ export async function GET(req: NextRequest) {
             .from(fanLetters)
             .groupBy(fanLetters.sentiment);
 
+        // 5. 최근 7일 수신 추이
+        const sevenDaysAgo = DateTime.now().minus({ days: 7 }).toISODate();
+        const recentTrendData = await db.select({
+            date: sql<string>`date(received_at)`,
+            count: sql<number>`count(*)`
+        })
+            .from(fanLetters)
+            .where(and(
+                gte(fanLetters.receivedAt, sevenDaysAgo || ""),
+            ))
+            .groupBy(sql`date(received_at)`)
+            .orderBy(sql`date(received_at)`);
+
+        // 7일 날짜 배열 생성 (데이터 없는 날도 0으로 표시)
+        const recentTrend = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = DateTime.now().minus({ days: i }).toISODate();
+            const found = recentTrendData.find(d => d.date === date);
+            recentTrend.push({
+                date,
+                count: found?.count || 0
+            });
+        }
+
+        // 6. 오늘 수신 수
+        const today = DateTime.now().toISODate();
+        const todayCount = recentTrendData.find(d => d.date === today)?.count || 0;
+
         return NextResponse.json({
             success: true,
             data: {
                 total: counts[0]?.total || 0,
                 unread: Number(counts[0]?.unread || 0),
                 unreplied: unrepliedResult[0]?.count || 0,
+                todayCount,
                 byLanguage: Object.fromEntries(byLanguage.map(x => [x.language || "unknown", x.count])),
                 bySentiment: Object.fromEntries(bySentiment.map(x => [x.sentiment || "unknown", x.count])),
+                recentTrend,
             }
         });
 

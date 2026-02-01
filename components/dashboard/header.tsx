@@ -1,4 +1,8 @@
-import { Bell, Search, User } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Bell, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,19 +13,38 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function Header() {
+    const router = useRouter();
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            router.push(`/dashboard/letters?search=${encodeURIComponent(searchQuery.trim())}`);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            handleSearch(e);
+        }
+    };
+
     return (
         <header className="h-16 border-b bg-white flex items-center justify-between px-8 sticky top-0 z-10">
             <div className="flex items-center gap-4 w-1/3">
-                <div className="relative w-full max-w-sm">
+                <form onSubmit={handleSearch} className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                     <Input
                         placeholder="팬레터 검색..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         className="pl-10 h-10 bg-neutral-100/50 border-none focus-visible:ring-1 focus-visible:ring-neutral-300"
                     />
-                </div>
+                </form>
             </div>
 
             <div className="flex items-center gap-4">

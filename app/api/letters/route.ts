@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { fanLetters } from "@/db/schema";
 import { createLetterSchema } from "@/lib/validations/letter";
-import { eq, and, or, like, desc, sql } from "drizzle-orm";
+import { eq, and, or, like, desc, sql, gte, lte } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
     try {
@@ -100,6 +100,9 @@ export async function GET(req: NextRequest) {
         const country = searchParams.get("country");
         const sentiment = searchParams.get("sentiment");
         const isRead = searchParams.get("isRead");
+        const isStarred = searchParams.get("isStarred");
+        const startDate = searchParams.get("startDate");
+        const endDate = searchParams.get("endDate");
 
         // Drizzle 조건 구성
         const conditions = [];
@@ -117,7 +120,10 @@ export async function GET(req: NextRequest) {
         if (language) conditions.push(eq(fanLetters.language, language));
         if (country) conditions.push(eq(fanLetters.country, country));
         if (sentiment) conditions.push(eq(fanLetters.sentiment, sentiment));
-        if (isRead !== null) conditions.push(eq(fanLetters.isRead, isRead === "true"));
+        if (isRead !== null && isRead !== undefined) conditions.push(eq(fanLetters.isRead, isRead === "true"));
+        if (isStarred !== null && isStarred !== undefined) conditions.push(eq(fanLetters.isStarred, isStarred === "true"));
+        if (startDate) conditions.push(gte(fanLetters.receivedAt, startDate));
+        if (endDate) conditions.push(lte(fanLetters.receivedAt, endDate));
 
         const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
