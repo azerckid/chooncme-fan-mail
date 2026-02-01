@@ -5,10 +5,11 @@ import { eq } from "drizzle-orm";
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const letterId = parseInt(params.id);
+        const { id: rawId } = await params;
+        const letterId = parseInt(rawId);
         if (isNaN(letterId)) {
             return NextResponse.json({ success: false, error: "Invalid Letter ID" }, { status: 400 });
         }
@@ -30,10 +31,11 @@ export async function GET(
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const letterId = parseInt(params.id);
+        const { id: rawId } = await params;
+        const letterId = parseInt(rawId);
         if (isNaN(letterId)) {
             return NextResponse.json({ success: false, error: "Invalid Letter ID" }, { status: 400 });
         }

@@ -5,10 +5,11 @@ import { eq } from "drizzle-orm";
 
 export async function PATCH(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const { id: rawId } = await params;
+        const id = parseInt(rawId);
         if (isNaN(id)) {
             return NextResponse.json({ success: false, error: "Invalid ID" }, { status: 400 });
         }
