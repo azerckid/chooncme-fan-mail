@@ -32,3 +32,13 @@ export {
   partitionEmails,
   type ClassificationResult,
 } from './classify';
+
+// 아카이브 함수
+export {
+  archiveEmail,
+  archiveEmails,
+  isEmailArchived,
+  getLetterIdByEmailId,
+  type ArchiveResult,
+  type ArchiveInput,
+} from './archive';
