@@ -12,8 +12,13 @@
  *   pm2 start dist/scripts/start-with-cron.js --name "email-worker"
  */
 
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'path';
 import { startScheduler, runNow, stopScheduler } from '../lib/scheduler/cron';
+
+// Next/다른 스크립트와 동일하게 .env.local 우선 로드
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config(); // .env 폴백
 
 // 환경변수 검증
 function validateEnv(): void {
