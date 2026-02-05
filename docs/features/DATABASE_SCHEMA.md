@@ -31,9 +31,37 @@ Drizzle ORM을 사용하여 정의될 예상 스키마 구조입니다.
 | replied_at | INTEGER (Timestamp) | 답장 생성 시각 |
 | created_at | INTEGER (Timestamp) | 레코드 생성 시각 |
 
+## 4. FollowUps (팔로업 테이블)
+답장 발송 후 응답이 없는 팬에게 자동 발송되는 팔로업 스케줄을 관리합니다.
+
+| Column Name | Type | Description |
+|---|---|---|
+| id | INTEGER | Primary Key (Auto Increment) |
+| reply_id | INTEGER | Foreign Key -> Replies.id |
+| sender_email | TEXT | 팬 이메일 (비정규화) |
+| follow_up_count | INTEGER | 발송된 팔로업 횟수 (0=대기중) |
+| next_follow_up_at | TEXT (ISO8601) | 다음 팔로업 예정일 |
+| status | TEXT | 상태: pending, completed, cancelled |
+| last_sent_at | TEXT (ISO8601) | 마지막 팔로업 발송일 |
+| cancel_reason | TEXT | 취소 사유 (fan_replied, new_email_received 등) |
+| created_at | TEXT (ISO8601) | 레코드 생성 시각 |
+| updated_at | TEXT (ISO8601) | 레코드 수정 시각 |
+
+### 팔로업 간격
+- 1번째: 1주 후 (7일)
+- 2번째: 2주 후 (14일)
+- 3번째: 4주 후 (28일)
+- 4번째: 8주 후 (56일) - 마지막
+
 ## Relationships
 - **FanLetters** : **Replies** = 1 : N (일반적으로 1:1이겠지만, 재답장 가능성을 열어둠)
+- **Replies** : **FollowUps** = 1 : 1 (각 답장에 대해 하나의 팔로업 스케줄)
 
 ## Indexes
 - `replies.letter_id` : 빠른 조회를 위한 인덱스
 - `fan_letters.received_at` : 최신순 정렬을 위한 인덱스
+- `fan_letters.sender_email` : 발신자별 조회
+- `fan_letters.is_replied` : 답장 상태 필터링
+- `follow_ups.sender_email` : 발신자별 팔로업 조회
+- `follow_ups.status` : 상태별 필터링
+- `follow_ups.next_follow_up_at` : due 팔로업 조회

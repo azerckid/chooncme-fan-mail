@@ -40,3 +40,32 @@ export {
   isSchedulerRunning,
   runNow,
 } from './cron';
+
+// 팔로업 추적
+export {
+  createFollowUp,
+  cancelFollowUpsForSender,
+  getPendingFollowUps,
+  hasFanRepliedSince,
+  updateFollowUpAfterSend,
+  getFollowUpContext,
+  calculateNextFollowUpDate,
+  isFollowUpEnabled,
+  getMaxFollowUps,
+  FOLLOW_UP_INTERVALS_DAYS,
+  MAX_FOLLOW_UPS,
+} from './follow-up';
+
+// 팔로업 콘텐츠 생성
+export {
+  generateFollowUp,
+  calculateDaysSince,
+  type GenerateFollowUpResult,
+} from './followup-generator';
+
+// 팔로업 처리
+export {
+  processFollowUps,
+  formatFollowUpResult,
+  type ProcessFollowUpsResult,
+} from './process-followups';

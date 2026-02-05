@@ -8,6 +8,7 @@ import { fanLetters, replies } from '@/db/schema';
 import { sendMail } from '@/lib/mail';
 import { eq } from 'drizzle-orm';
 import { DateTime } from 'luxon';
+import { createFollowUp, isFollowUpEnabled } from './follow-up';
 
 /**
  * 지연 발송 옵션
@@ -126,6 +127,16 @@ export async function sendReplyImmediately(request: SendRequest): Promise<SendRe
     console.log(
       `[Send] Reply sent${dryRun ? ' (dry-run)' : ''}: letterId=${letterId}, replyId=${inserted?.id}`
     );
+
+    // 6. 팔로업 추적 레코드 생성
+    if (isFollowUpEnabled() && inserted?.id) {
+      try {
+        await createFollowUp(inserted.id, to);
+      } catch (followUpError) {
+        // 팔로업 생성 실패해도 답장 발송은 성공으로 처리
+        console.error('[Send] Failed to create follow-up tracking:', followUpError);
+      }
+    }
 
     return {
       success: true,

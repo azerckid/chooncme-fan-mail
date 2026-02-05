@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { processEmails, formatProcessResult } from '@/lib/scheduler';
+import { processEmails, formatProcessResult, processFollowUps, formatFollowUpResult } from '@/lib/scheduler';
 import { createLogger } from '@/lib/logger';
 import { alertError } from '@/lib/alert';
 
@@ -69,11 +69,32 @@ export async function POST(req: NextRequest) {
       ]);
     }
 
+    // 5. 팔로업 처리 실행
+    logger.info('Processing follow-ups...');
+    const followUpResult = await processFollowUps();
+
+    logger.info('Follow-ups processed', {
+      processed: followUpResult.processed,
+      sent: followUpResult.sent,
+      cancelled: followUpResult.cancelled,
+      errors: followUpResult.errors,
+    });
+
+    // 6. 팔로업 에러가 있으면 알림
+    if (followUpResult.errors > 0) {
+      await alertError('팔로업 처리 중 오류 발생', `${followUpResult.errors}건의 오류 발생`, [
+        { name: 'Processed', value: String(followUpResult.processed) },
+        { name: 'Errors', value: String(followUpResult.errors) },
+      ]);
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         ...result,
+        followUps: followUpResult,
         summary: formatProcessResult(result),
+        followUpSummary: formatFollowUpResult(followUpResult),
       },
     });
   } catch (error) {

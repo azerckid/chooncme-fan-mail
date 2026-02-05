@@ -52,3 +52,36 @@ export const replies = sqliteTable("replies", {
 }, (table) => ({
     letterIdIdx: index("idx_reply_letter_id").on(table.letterId),
 }));
+
+export const followUps = sqliteTable("follow_ups", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+
+    // 원본 답장 참조
+    replyId: integer("reply_id").references(() => replies.id).notNull(),
+
+    // 발신자 이메일 (효율적인 조회를 위해 비정규화)
+    senderEmail: text("sender_email").notNull(),
+
+    // 팔로업 카운트 (0 = 첫 팔로업 대기 중, 1 = 첫 팔로업 발송됨, ...)
+    followUpCount: integer("follow_up_count").default(0).notNull(),
+
+    // 다음 팔로업 예정일 (ISO 8601)
+    nextFollowUpAt: text("next_follow_up_at").notNull(),
+
+    // 상태: 'pending' | 'completed' | 'cancelled'
+    status: text("status").default("pending").notNull(),
+
+    // 마지막 팔로업 발송일
+    lastSentAt: text("last_sent_at"),
+
+    // 취소 사유 (cancelled 상태인 경우)
+    cancelReason: text("cancel_reason"),
+
+    // 타임스탬프
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+    senderEmailIdx: index("idx_followup_sender_email").on(table.senderEmail),
+    statusIdx: index("idx_followup_status").on(table.status),
+    nextFollowUpAtIdx: index("idx_followup_next_at").on(table.nextFollowUpAt),
+}));

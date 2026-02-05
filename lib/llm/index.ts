@@ -35,3 +35,12 @@ export {
   type ReplyPromptInput,
   type GeneratedReply,
 } from './reply-prompt';
+
+// 팔로업 프롬프트
+export {
+  getFollowUpSystemPrompt,
+  buildFollowUpUserPrompt,
+  parseFollowUpResponse,
+  type FollowUpPromptInput,
+  type GeneratedFollowUp,
+} from './followup-prompt';

@@ -7,6 +7,7 @@ import { db } from '@/db';
 import { fanLetters } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { EmailMessage } from './types';
+import { cancelFollowUpsForSender } from '@/lib/scheduler/follow-up';
 
 /**
  * 아카이브 결과
@@ -58,7 +59,18 @@ export async function archiveEmail(input: ArchiveInput): Promise<ArchiveResult> 
       };
     }
 
-    // 2. DB 저장
+    // 2. 이 발신자의 pending 팔로업 취소 (새 이메일을 보냈으므로)
+    try {
+      const cancelledCount = await cancelFollowUpsForSender(email.fromEmail, 'new_email_received');
+      if (cancelledCount > 0) {
+        console.log(`[Archive] Cancelled ${cancelledCount} pending follow-ups for ${email.fromEmail}`);
+      }
+    } catch (followUpError) {
+      // 팔로업 취소 실패해도 아카이브는 계속 진행
+      console.error('[Archive] Failed to cancel follow-ups:', followUpError);
+    }
+
+    // 3. DB 저장
     const result = await db
       .insert(fanLetters)
       .values({
