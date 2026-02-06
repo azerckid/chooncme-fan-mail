@@ -30,11 +30,18 @@ export {
 // 답장 프롬프트
 export {
   REPLY_SYSTEM_PROMPT,
+  PLAN_SYSTEM_PROMPT,
   buildReplyUserPrompt,
+  buildPlanPrompt,
+  buildWriteUserPrompt,
   parseReplyResponse,
   type ReplyPromptInput,
+  type WritePromptInput,
   type GeneratedReply,
 } from './reply-prompt';
+
+// 답장 계획 파서 (Phase 2)
+export { parsePlanResponse, type ReplyPlan } from './reply-parser';
 
 // 팔로업 프롬프트
 export {

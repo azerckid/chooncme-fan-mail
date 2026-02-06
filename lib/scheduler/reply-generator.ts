@@ -1,5 +1,6 @@
 /**
  * LLM을 사용한 답장 생성
+ * USE_TWO_STEP_REPLY=true 시 2단계(계획 → 작성) 흐름 사용
  */
 
 import {
@@ -7,10 +8,16 @@ import {
   withRetry,
   REPLY_SYSTEM_PROMPT,
   buildReplyUserPrompt,
+  buildPlanPrompt,
+  buildWriteUserPrompt,
   parseReplyResponse,
+  parsePlanResponse,
+  PLAN_SYSTEM_PROMPT,
   type GeneratedReply,
 } from '@/lib/llm';
 import { EmailMessage } from '@/lib/email';
+
+const USE_TWO_STEP_REPLY = process.env.USE_TWO_STEP_REPLY === 'true';
 
 export { type GeneratedReply };
 
@@ -66,14 +73,49 @@ export async function generateReply(input: GenerateReplyInput): Promise<Generate
 }
 
 /**
+ * 2단계 답장 생성: 계획 → 작성 (Phase 2)
+ */
+export async function generateReplyTwoStep(input: GenerateReplyInput): Promise<GenerateReplyResult> {
+  try {
+    const llm = createReplyClient();
+    const base = {
+      fanName: input.fanName,
+      letterSubject: input.letterSubject,
+      letterContent: input.letterContent,
+    };
+
+    const planPrompt = buildPlanPrompt(base);
+    const planResponse = await withRetry(() => llm.chat(PLAN_SYSTEM_PROMPT, planPrompt));
+    const plan = parsePlanResponse(planResponse.content);
+
+    const writePrompt = buildWriteUserPrompt({ ...base, plan });
+    const writeResponse = await withRetry(() => llm.chat(REPLY_SYSTEM_PROMPT, writePrompt));
+    const reply = parseReplyResponse(writeResponse.content);
+
+    return {
+      success: true,
+      reply,
+    };
+  } catch (error) {
+    console.error('[ReplyGenerator] Two-step reply failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
  * 이메일 메시지에서 답장 생성 (편의 함수)
+ * USE_TWO_STEP_REPLY=true 이면 2단계 흐름 사용
  */
 export async function generateReplyFromEmail(email: EmailMessage): Promise<GenerateReplyResult> {
-  return generateReply({
+  const input = {
     fanName: email.fromName,
     letterSubject: email.subject,
     letterContent: email.bodyPlain,
-  });
+  };
+  return USE_TWO_STEP_REPLY ? generateReplyTwoStep(input) : generateReply(input);
 }
 
 /**
