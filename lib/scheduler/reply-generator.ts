@@ -88,6 +88,8 @@ export async function generateReplyTwoStep(input: GenerateReplyInput): Promise<G
     const planResponse = await withRetry(() => llm.chat(PLAN_SYSTEM_PROMPT, planPrompt));
     const plan = parsePlanResponse(planResponse.content);
 
+    console.log('[ReplyGenerator] Two-step plan:', JSON.stringify(plan, null, 2));
+
     const writePrompt = buildWriteUserPrompt({ ...base, plan });
     const writeResponse = await withRetry(() => llm.chat(REPLY_SYSTEM_PROMPT, writePrompt));
     const reply = parseReplyResponse(writeResponse.content);

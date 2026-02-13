@@ -37,14 +37,17 @@ export async function processFollowUps(): Promise<ProcessFollowUpsResult> {
 
   // 팔로업 기능 비활성화 확인
   if (!isFollowUpEnabled()) {
+    console.log('[FollowUp] Disabled (FOLLOWUP_ENABLED is false)');
     logger.info('Follow-up processing is disabled');
     return result;
   }
 
   const dryRun = process.env.EMAIL_DRY_RUN === 'true';
+  if (dryRun) console.log('[FollowUp] DRY-RUN: no actual send');
 
   try {
     const pendingFollowUps = await getPendingFollowUps();
+    console.log(`[FollowUp] Found ${pendingFollowUps.length} pending follow-ups due`);
     logger.info(`Found ${pendingFollowUps.length} pending follow-ups due`);
 
     for (const followUp of pendingFollowUps) {
@@ -54,6 +57,7 @@ export async function processFollowUps(): Promise<ProcessFollowUpsResult> {
         // 1. 컨텍스트 조회
         const context = await getFollowUpContext(followUp.replyId);
         if (!context) {
+          console.log(`[FollowUp] No context for id=${followUp.id} replyId=${followUp.replyId}, skip`);
           logger.warn(`No context found for follow-up ${followUp.id}, skipping`);
           result.errors++;
           continue;
@@ -87,6 +91,7 @@ export async function processFollowUps(): Promise<ProcessFollowUpsResult> {
         });
 
         if (!genResult.success || !genResult.followUp) {
+          console.log(`[FollowUp] Generate failed for ${followUp.senderEmail}: ${genResult.error}`);
           logger.error(
             `Failed to generate follow-up for ${followUp.senderEmail}: ${genResult.error}`
           );
@@ -111,6 +116,7 @@ export async function processFollowUps(): Promise<ProcessFollowUpsResult> {
         await updateFollowUpAfterSend(followUp.id);
         result.sent++;
 
+        console.log(`[FollowUp] Sent #${followUp.followUpCount + 1} to ${followUp.senderEmail}${dryRun ? ' (dry-run)' : ''}`);
         logger.info(
           `Sent follow-up #${followUp.followUpCount + 1} to ${followUp.senderEmail}${dryRun ? ' (dry-run)' : ''}`
         );
@@ -118,6 +124,7 @@ export async function processFollowUps(): Promise<ProcessFollowUpsResult> {
         // Rate limit 방지를 위한 딜레이
         await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (error) {
+        console.log(`[FollowUp] Error id=${followUp.id}:`, error instanceof Error ? error.message : error);
         logger.error(`Error processing follow-up ${followUp.id}:`, error);
         result.errors++;
       }

@@ -5,7 +5,7 @@
 
 import { db } from '@/db';
 import { followUps, fanLetters, replies } from '@/db/schema';
-import { eq, and, lte, gt } from 'drizzle-orm';
+import { eq, and, lte, gt, asc } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 
 // 팔로업 간격 (일 단위): 1주, 2주, 4주, 8주
@@ -78,7 +78,7 @@ export async function cancelFollowUpsForSender(
 }
 
 /**
- * due된 pending 팔로업 목록 조회
+ * due된 pending 팔로업 목록 조회 (발송 예정 시점이 지난 것만)
  */
 export async function getPendingFollowUps(): Promise<
   Array<{
@@ -94,6 +94,38 @@ export async function getPendingFollowUps(): Promise<
   return db.query.followUps.findMany({
     where: and(eq(followUps.status, 'pending'), lte(followUps.nextFollowUpAt, now)),
   });
+}
+
+/**
+ * 팔로업 대상 전체 목록 조회 (답장은 보냈으나 아직 팬 답장 없는 건)
+ * status=pending인 모든 건. nextFollowUpAt 기준 정렬.
+ */
+export async function listAllPendingFollowUps(): Promise<
+  Array<{
+    id: number;
+    replyId: number;
+    senderEmail: string;
+    followUpCount: number;
+    nextFollowUpAt: string;
+    lastSentAt: string | null;
+    createdAt: string | null;
+  }>
+> {
+  const rows = await db.query.followUps.findMany({
+    where: eq(followUps.status, 'pending'),
+    columns: {
+      id: true,
+      replyId: true,
+      senderEmail: true,
+      followUpCount: true,
+      nextFollowUpAt: true,
+      lastSentAt: true,
+      createdAt: true,
+    },
+    orderBy: [asc(followUps.nextFollowUpAt)],
+  });
+
+  return rows;
 }
 
 /**

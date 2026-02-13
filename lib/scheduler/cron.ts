@@ -1,10 +1,11 @@
 /**
  * node-cron 기반 스케줄러
- * 1시간마다 이메일 처리 작업 실행
+ * 1시간마다 이메일 처리 + 팔로업 처리 실행
  */
 
 import cron, { type ScheduledTask } from 'node-cron';
 import { processEmails, formatProcessResult, type ProcessOptions } from './process-emails';
+import { processFollowUps, formatFollowUpResult } from './process-followups';
 
 let scheduledTask: ScheduledTask | null = null;
 let isRunning = false;
@@ -37,6 +38,8 @@ export function startScheduler(
     try {
       const result = await processEmails(processOptions);
       console.log(formatProcessResult(result));
+      const followUpResult = await processFollowUps();
+      console.log(formatFollowUpResult(followUpResult));
     } catch (error) {
       console.error('[Cron] Job failed:', error);
     } finally {
@@ -80,6 +83,8 @@ export async function runNow(processOptions: ProcessOptions = {}): Promise<void>
   try {
     const result = await processEmails(processOptions);
     console.log(formatProcessResult(result));
+    const followUpResult = await processFollowUps();
+    console.log(formatFollowUpResult(followUpResult));
   } catch (error) {
     console.error('[Cron] Manual run failed:', error);
   } finally {

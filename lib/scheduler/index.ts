@@ -46,6 +46,7 @@ export {
   createFollowUp,
   cancelFollowUpsForSender,
   getPendingFollowUps,
+  listAllPendingFollowUps,
   hasFanRepliedSince,
   updateFollowUpAfterSend,
   getFollowUpContext,

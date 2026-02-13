@@ -121,12 +121,13 @@ export async function processEmails(options: ProcessOptions = {}): Promise<Proce
     const { fanLetters, generalEmails } = await partitionEmails(emails, {
       delayMs: classifyDelayMs,
       onClassified: (email, classification) => {
-        log(`  ${email.subject?.slice(0, 30)}... → ${classification.classification} (${classification.confidence.toFixed(2)})`);
+        log(`  ${email.subject?.slice(0, 30)}... → ${classification.classification} (${classification.confidence.toFixed(2)})${classification.reason ? ` | ${classification.reason}` : ''}`);
       },
     });
     result.fanLetterCount = fanLetters.length;
     result.generalCount = generalEmails.length;
     log(`Classified: ${fanLetters.length} fan letters, ${generalEmails.length} general`);
+    // 일반 메일(generalEmails)은 DB에 저장하지 않음. 팬레터만 아카이브 대상.
 
     if (fanLetters.length === 0) {
       log('No fan letters to process');
