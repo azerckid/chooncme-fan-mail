@@ -6,7 +6,7 @@
 import { z } from 'zod';
 
 const ReplyPlanSchema = z.object({
-  detected_language: z.enum(['ko', 'en', 'ja', 'es']),
+  detected_language: z.enum(['ko', 'en', 'ja', 'es', 'pt', 'ar']),
   fan_name: z.string().min(1),
   key_topics: z.array(z.string()),
   emotional_tone: z.string(),

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
     LineChart,
     Line,
@@ -25,50 +26,80 @@ interface DistributionData {
     [key: string]: number;
 }
 
-// 7일 추이 라인 차트
-export function TrendChart({ data }: { data: TrendData[] }) {
+interface TrendChartProps {
+    data7Days: TrendData[];
+    data30Days: TrendData[];
+}
+
+export function TrendChart({ data7Days, data30Days }: TrendChartProps) {
+    const [period, setPeriod] = useState<"7" | "30">("7");
+    const data = period === "7" ? data7Days : data30Days;
+
     const formattedData = data.map(item => ({
         ...item,
-        date: item.date ? item.date.slice(5) : "", // MM-DD 형식으로 표시
+        date: item.date ? item.date.slice(5) : "",
     }));
 
     return (
-        <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={formattedData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 12, fill: "#888" }}
-                    axisLine={{ stroke: "#e5e5e5" }}
-                />
-                <YAxis
-                    tick={{ fontSize: 12, fill: "#888" }}
-                    axisLine={{ stroke: "#e5e5e5" }}
-                    allowDecimals={false}
-                />
-                <Tooltip
-                    contentStyle={{
-                        background: "#fff",
-                        border: "1px solid #e5e5e5",
-                        borderRadius: "8px",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-                    }}
-                    formatter={(value) => [`${value}통`, "수신"]}
-                />
-                <Line
-                    type="monotone"
-                    dataKey="count"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2 }}
-                />
-            </LineChart>
-        </ResponsiveContainer>
+        <div>
+            <div className="flex gap-2 mb-4">
+                <button
+                    onClick={() => setPeriod("7")}
+                    className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                        period === "7"
+                            ? "bg-blue-500 text-white"
+                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                    }`}
+                >
+                    7일
+                </button>
+                <button
+                    onClick={() => setPeriod("30")}
+                    className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                        period === "30"
+                            ? "bg-blue-500 text-white"
+                            : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                    }`}
+                >
+                    30일
+                </button>
+            </div>
+            <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={formattedData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 12, fill: "#888" }}
+                        axisLine={{ stroke: "#e5e5e5" }}
+                    />
+                    <YAxis
+                        tick={{ fontSize: 12, fill: "#888" }}
+                        axisLine={{ stroke: "#e5e5e5" }}
+                        allowDecimals={false}
+                    />
+                    <Tooltip
+                        contentStyle={{
+                            background: "#fff",
+                            border: "1px solid #e5e5e5",
+                            borderRadius: "8px",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+                        }}
+                        formatter={(value) => [`${value}통`, "수신"]}
+                    />
+                    <Line
+                        type="monotone"
+                        dataKey="count"
+                        stroke="#3b82f6"
+                        strokeWidth={2}
+                        dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, stroke: "#fff", strokeWidth: 2 }}
+                    />
+                </LineChart>
+            </ResponsiveContainer>
+        </div>
     );
 }
 
-// 감정별 분포 파이 차트
 const SENTIMENT_COLORS: { [key: string]: string } = {
     positive: "#22c55e",
     neutral: "#eab308",
@@ -132,44 +163,68 @@ export function SentimentChart({ data }: { data: DistributionData }) {
     );
 }
 
-// 언어별 분포 바 차트
 const LANGUAGE_LABELS: { [key: string]: string } = {
     ko: "🇰🇷 한국어",
-    en: "🇺🇸 영어",
+    en: "🇬🇧 영어",
     ja: "🇯🇵 일본어",
     zh: "🇨🇳 중국어",
     es: "🇪🇸 스페인어",
+    pt: "🇧🇷 포르투갈어",
+    ar: "🇸🇦 아랍어",
+    fr: "🇫🇷 프랑스어",
+    de: "🇩🇪 독일어",
+    tr: "🇹🇷 터키어",
+    th: "🇹🇭 태국어",
+    vi: "🇻🇳 베트남어",
+    ru: "🇷🇺 러시아어",
+    id: "🇮🇩 인도네시아어",
+    it: "🇮🇹 이탈리아어",
+    hr: "🇭🇷 크로아티아어",
+    hu: "🇭🇺 헝가리어",
+    sk: "🇸🇰 슬로바키아어",
     unknown: "기타",
 };
 
 export function LanguageChart({ data }: { data: DistributionData }) {
-    const chartData = Object.entries(data)
+    const sortedEntries = Object.entries(data)
         .filter(([_, value]) => value > 0)
-        .map(([key, value]) => ({
-            name: LANGUAGE_LABELS[key] || key.toUpperCase(),
-            count: value,
-        }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 6); // 상위 6개만 표시
+        .sort((a, b) => b[1] - a[1]);
+
+    // 상위 10개 언어만 독립적으로 보여주고, 나머지는 "기타 소수 언어"로 통합
+    const top10 = sortedEntries.slice(0, 10);
+    const othersCount = sortedEntries.slice(10).reduce((acc, [_, val]) => acc + val, 0);
+
+    const chartData = top10.map(([key, value]) => ({
+        name: LANGUAGE_LABELS[key] || key.toUpperCase(),
+        count: value,
+    }));
+
+    if (othersCount > 0) {
+        chartData.push({
+            name: "기타",
+            count: othersCount,
+        });
+    }
 
     if (chartData.length === 0) {
         return (
-            <div className="h-[200px] flex items-center justify-center text-neutral-400 text-sm">
+            <div className="h-[350px] flex items-center justify-center text-neutral-400 text-sm">
                 아직 데이터가 없습니다
             </div>
         );
     }
 
     return (
-        <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={chartData} layout="vertical">
+        <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 11, fill: "#888" }} allowDecimals={false} />
                 <YAxis
                     dataKey="name"
                     type="category"
                     tick={{ fontSize: 11, fill: "#666" }}
-                    width={80}
+                    width={90}
+                    interval={0}
                 />
                 <Tooltip
                     formatter={(value) => [`${value}통`, ""]}

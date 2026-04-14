@@ -13,6 +13,7 @@ import { ReplyForm } from "@/components/dashboard/letters/reply-form";
 import Link from "next/link";
 import { ChevronLeft, Calendar, MapPin, Smile, Heart, History } from "lucide-react";
 import { DateTime } from "luxon";
+import { maskName, maskEmail } from "@/lib/utils";
 
 async function getLetterDetail(id: number) {
     const item = await db.query.fanLetters.findFirst({
@@ -82,8 +83,8 @@ export default async function LetterDetailPage({
                                     {data.senderName[0]}
                                 </div>
                                 <div>
-                                    <h1 className="text-xl font-bold">{data.senderName}</h1>
-                                    <p className="text-neutral-400 text-sm">{data.senderEmail}</p>
+                                    <h1 className="text-xl font-bold">{maskName(data.senderName)}</h1>
+                                    <p className="text-neutral-400 text-sm">{maskEmail(data.senderEmail)}</p>
                                 </div>
                             </div>
                             <div className="text-right text-neutral-400 text-sm">

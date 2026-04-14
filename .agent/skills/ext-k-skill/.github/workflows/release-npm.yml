@@ -1,0 +1,51 @@
+name: Release npm packages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".changeset/**"
+      - ".github/workflows/release-npm.yml"
+      - "package-lock.json"
+      - "package.json"
+      - "packages/**"
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+# npm publishes authenticate with the repository-level NPM_TOKEN secret.
+# id-token stays enabled so npm can still attach provenance when supported.
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+      - run: npm run ci
+
+      - name: Create npm release PR or publish changed packages
+        uses: changesets/action@v1
+        with:
+          version: npm run version-packages
+          publish: npm run release:npm
+          commit: "chore: version packages"
+          title: "chore: version packages"
+          createGithubReleases: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"

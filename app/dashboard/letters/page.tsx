@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { maskName, maskEmail } from "@/lib/utils";
 import {
     Search,
     Filter,
@@ -117,10 +118,10 @@ export default async function LettersPage({
                                         <div className="flex-1 space-y-3 min-w-0">
                                             <div className="flex items-center gap-3">
                                                 <span className="font-bold text-lg text-neutral-900 truncate">
-                                                    {letter.senderName}
+                                                    {maskName(letter.senderName)}
                                                 </span>
                                                 <span className="text-sm text-neutral-400 truncate hidden md:inline">
-                                                    {letter.senderEmail}
+                                                    {maskEmail(letter.senderEmail)}
                                                 </span>
                                                 <div className="flex gap-2">
                                                     <Badge variant="secondary" className="bg-white border-neutral-200">

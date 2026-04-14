@@ -3,6 +3,8 @@
  * 메일 수집 → 분류 → 아카이브 → 답장 생성 → 지연 발송
  */
 
+import { db } from '@/db';
+import { fanLetters } from '@/db/schema';
 import {
   createGmailClientFromEnv,
   fetchRecentEmails,
@@ -16,6 +18,7 @@ import {
   scheduleDelayedSend,
   isDryRunMode,
 } from './index';
+import { eq } from 'drizzle-orm';
 
 /**
  * 처리 결과 통계
@@ -190,6 +193,16 @@ async function processFanLetter(
   if (!letterId) {
     result.errorCount++;
     log(`  No letterId available for ${email.id}`);
+    return;
+  }
+
+  // 이미 답장한 letter면 답장 생성·예약 생략 (중복 수집 시 지연 발송 실패 방지)
+  const letter = await db.query.fanLetters.findFirst({
+    where: eq(fanLetters.id, letterId),
+    columns: { isReplied: true },
+  });
+  if (letter?.isReplied) {
+    log(`  Skip reply (already replied): letterId=${letterId}`);
     return;
   }
 

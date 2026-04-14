@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { fanLetters, replies } from "@/db/schema";
-import { eq, sql, isNull, gte, and } from "drizzle-orm";
+import { fanLetters } from "@/db/schema";
+import { eq, sql, gte, and } from "drizzle-orm";
 import { DateTime } from "luxon";
 
 export async function GET(_req: NextRequest) {
@@ -12,13 +12,12 @@ export async function GET(_req: NextRequest) {
             unread: sql<number>`sum(case when is_read = 0 then 1 else 0 end)`,
         }).from(fanLetters);
 
-        // 2. 미답장 수 집계 (Left Join 사용)
+        // 2. 미답장 수 집계 (is_replied 기준, replies 테이블과 일관성 유지)
         const unrepliedResult = await db.select({
             count: sql<number>`count(*)`
         })
             .from(fanLetters)
-            .leftJoin(replies, eq(fanLetters.id, replies.letterId))
-            .where(isNull(replies.id));
+            .where(eq(fanLetters.isReplied, false));
 
         // 3. 언어별 분포
         const byLanguage = await db.select({
