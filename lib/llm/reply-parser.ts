@@ -9,7 +9,7 @@ const ReplyPlanSchema = z.object({
   detected_language: z.enum(['ko', 'en', 'ja', 'es', 'pt', 'ar']),
   fan_name: z.string().min(1),
   key_topics: z.array(z.string()),
-  emotional_tone: z.string(),
+  emotional_tone: z.enum(['love', 'support', 'joy', 'gratitude', 'longing', 'sadness', 'concern', 'neutral']),
   suggested_questions: z.array(z.string()),
   practice_topic: z.string(),
 });

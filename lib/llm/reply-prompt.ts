@@ -59,7 +59,7 @@ export const PLAN_SYSTEM_PROMPT = `당신은 팬레터 분석 전문가입니다
   "detected_language": "ko" | "en" | "ja" | "es" | "pt" | "ar",
   "fan_name": "팬 이름 (원문 그대로 또는 추출)",
   "key_topics": ["주제1", "주제2"],
-  "emotional_tone": "happy" | "sad" | "neutral" | "excited" | "tired" | "grateful",
+  "emotional_tone": "love" | "support" | "joy" | "gratitude" | "longing" | "sadness" | "concern" | "neutral",
   "suggested_questions": ["맥락에 맞는 질문 1", "질문 2"],
   "practice_topic": "이번 답장에서 언급할 노래 또는 춤 연습 주제 (예: 복식 호흡, 웨이브)"
 }
@@ -67,6 +67,15 @@ export const PLAN_SYSTEM_PROMPT = `당신은 팬레터 분석 전문가입니다
 # 규칙
 - detected_language: 팬레터 본문이 주로 쓰인 언어. ko(한국어), en(영어), ja(일본어), es(스페인어), pt(포르투갈어), ar(아랍어). 혼합이면 비중이 큰 것.
 - key_topics: 팬레터 핵심 주제 2~4개. 짧은 문자열 배열.
+- emotional_tone: 다음 8가지 중 가장 지배적인 감정을 하나 선택하십시오:
+  * love (사랑/애정): 강력한 팬심, 고백, 무한한 사랑
+  * support (응원/격려): 데뷔 응원, 믿음, 힘내라는 격려
+  * joy (기쁨/환희): 오늘 무대 최고, 행복, 즐거움
+  * gratitude (감사): 존재에 대한 감사, 답장에 대한 고마움
+  * longing (그리움): 보고 싶음, 다음 만남 대기, 활동 기다림
+  * sadness (슬픔): 개인적인 힘든 고백, 위로가 필요한 상황
+  * concern (걱정): 건강 걱정, 밥 잘 먹으라는 당부, 휴식 권유
+  * neutral (평온): 일상 공유, 단순 정보 전달, 담담한 인사
 - suggested_questions: 팬레터 맥락에 맞는 안부/질문 2~3개. 이 중 1~2개를 답장에 사용할 예정.
 - practice_topic: 노래(발성, 호흡, 비브라토, 고음 등) 또는 춤(웨이브, 그루브, 안무 포인트 등) 중 하나를 구체적으로.`;
 

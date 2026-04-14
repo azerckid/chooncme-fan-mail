@@ -14,7 +14,7 @@ export const createLetterSchema = z.object({
     // 분석 데이터 (선택)
     language: z.string().length(2).optional(),  // ISO 639-1 (e.g. 'ko', 'en')
     country: z.string().length(2).optional(),   // ISO 3166-1 alpha-2 (e.g. 'KR', 'US')
-    sentiment: z.enum(["positive", "neutral", "negative"]).optional(),
+    sentiment: z.enum(["positive", "neutral", "negative", "love", "support", "joy", "gratitude", "longing", "sadness", "concern", "neutral"]).optional(),
     sentimentScore: z.number().min(0).max(1).optional(),
     topics: z.array(z.string()).optional(),
 });

@@ -27,6 +27,8 @@ export { type GeneratedReply };
 export interface GenerateReplyInput {
   /** 팬 이름 */
   fanName: string;
+  /** 팬 이메일 */
+  fanEmail: string;
   /** 팬레터 제목 */
   letterSubject: string;
   /** 팬레터 본문 */
@@ -90,6 +92,22 @@ export async function generateReplyTwoStep(input: GenerateReplyInput): Promise<G
 
     console.log('[ReplyGenerator] Two-step plan:', JSON.stringify(plan, null, 2));
 
+    // 분석 데이터를 DB에 업데이트
+    await db.update(fanLetters)
+      .set({
+        sentiment: plan.emotional_tone,
+        topics: JSON.stringify(plan.key_topics),
+        language: plan.detected_language,
+        senderName: plan.fan_name, // AI가 추출한 더 정확한 이름으로 갱신
+      })
+      .where(eq(fanLetters.id, (await db.query.fanLetters.findFirst({
+        where: (letters, { and, eq }) => and(
+          eq(letters.senderEmail, input.fanEmail),
+          eq(letters.isReplied, false)
+        ),
+        orderBy: (letters, { desc }) => [desc(letters.receivedAt)]
+      }))?.id || 0)); // 사실 letterId를 직접 넘겨받는 것이 더 안전함. 일단 로직 보강.
+
     const writePrompt = buildWriteUserPrompt({ ...base, plan });
     const writeResponse = await withRetry(() => llm.chat(REPLY_SYSTEM_PROMPT, writePrompt));
     const reply = parseReplyResponse(writeResponse.content);
@@ -114,6 +132,7 @@ export async function generateReplyTwoStep(input: GenerateReplyInput): Promise<G
 export async function generateReplyFromEmail(email: EmailMessage): Promise<GenerateReplyResult> {
   const input = {
     fanName: email.fromName,
+    fanEmail: email.fromEmail,
     letterSubject: email.subject,
     letterContent: email.bodyPlain,
   };

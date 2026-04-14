@@ -101,15 +101,29 @@ export function TrendChart({ data7Days, data30Days }: TrendChartProps) {
 }
 
 const SENTIMENT_COLORS: { [key: string]: string } = {
-    positive: "#22c55e",
+    love: "#ff4d94",      // 핫핑크
+    support: "#4d79ff",   // 블루
+    joy: "#ffcc00",       // 옐로우
+    gratitude: "#9966ff", // 퍼플
+    longing: "#ff9933",   // 오렌지
+    sadness: "#669999",   // 민트그레이
+    concern: "#00cc99",   // 그린티
     neutral: "#eab308",
+    positive: "#22c55e",
     negative: "#ef4444",
     unknown: "#a3a3a3",
 };
 
 const SENTIMENT_LABELS: { [key: string]: string } = {
-    positive: "긍정 😊",
+    love: "사랑 ❤️",
+    support: "응원 🙌",
+    joy: "행복 ✨",
+    gratitude: "감사 🙏",
+    longing: "그리움 💌",
+    sadness: "슬픔 💧",
+    concern: "걱정 🍵",
     neutral: "중립 😐",
+    positive: "긍정 😊",
     negative: "부정 😢",
     unknown: "분석 전",
 };
@@ -132,15 +146,15 @@ export function SentimentChart({ data }: { data: DistributionData }) {
     }
 
     return (
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height={300}>
             <PieChart>
                 <Pie
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={2}
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
                     dataKey="value"
                 >
                     {chartData.map((entry, index) => (
